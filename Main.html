@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seam | Keep the person. Upgrade the parts.</title>
+<meta name="description" content="Seam builds replacement eyes, limbs and neural links that fit around who you already are.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --steel-900:#131A22;
+    --steel-800:#1B2430;
+    --steel-700:#2A3542;
+    --steel-500:#6B7B8C;
+    --steel-300:#A7B4C2;
+    --bone:#EFE6DA;
+    --ink:#1A1512;
+    --muted-on-bone:#5A4E44;
+    --led:#FF5B2E;
+    --led-deep:#C63A14;
+    --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+    --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--steel-900);color:var(--bone);
+    font-family:var(--body);font-size:1.0625rem;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--display);font-weight:800;line-height:.98;margin:0;letter-spacing:.005em}
+  p{margin:0}
+  a{color:inherit}
+  :focus-visible{outline:3px solid var(--led);outline-offset:3px;border-radius:2px}
+  .wrap{width:min(1240px,100% - 2.5rem);margin-inline:auto}
+  .section{padding-block:clamp(4rem,9vw,8rem)}
+
+  /* ---------- Header ---------- */
+  .site-header{padding-block:1.25rem}
+  .site-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1.5rem}
+  .brand{display:flex;align-items:center;gap:.65rem;text-decoration:none;font-family:var(--display);font-weight:900;font-size:1.75rem;letter-spacing:.06em}
+  .nav{display:flex;align-items:center;gap:2rem}
+  .nav a{text-decoration:none;color:var(--steel-300);font-size:.9375rem}
+  .nav a:hover{color:var(--bone)}
+  .nav .btn{color:var(--bone)}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    font:500 1rem/1 var(--body);padding:.95rem 1.5rem;border-radius:4px;
+    text-decoration:none;cursor:pointer;border:1.5px solid var(--led);
+    background:transparent;color:var(--bone);transition:background .15s,color .15s;
+  }
+  .btn:hover{background:var(--led);color:var(--steel-900)}
+  .btn--solid{background:var(--led);color:var(--steel-900)}
+  .btn--solid:hover{background:var(--bone);border-color:var(--bone)}
+
+  /* ---------- Hero ---------- */
+  .hero{padding-block:clamp(2rem,5vw,4.5rem) clamp(4rem,8vw,7rem)}
+  .hero__grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(2rem,5vw,4.5rem);align-items:center}
+  .hero h1{font-size:clamp(3.4rem,8vw,6.6rem);font-weight:900}
+  .hero__lede{margin-top:1.5rem;max-width:34ch;color:var(--steel-300);font-size:1.1875rem}
+  .hero__actions{margin-top:2rem;display:flex;flex-wrap:wrap;align-items:center;gap:1.5rem}
+  .link-quiet{color:var(--steel-300);text-underline-offset:.3em}
+  .link-quiet:hover{color:var(--bone)}
+
+  .visual-wrap{min-width:0}
+  .visual{
+    --seam:100%;
+    position:relative;aspect-ratio:3/2;overflow:hidden;border-radius:6px;
+    background:var(--steel-800);outline:1px solid var(--steel-700);
+    user-select:none;-webkit-user-select:none;
+  }
+  .visual svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .machine{position:absolute;inset:0;clip-path:inset(0 0 0 var(--seam))}
+  .iris{
+    transform:translate(calc(var(--ix,0) * 1px),calc(var(--iy,0) * 1px));
+    transition:transform .14s ease-out;
+  }
+  .visual input{
+    position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;
+    cursor:ew-resize;z-index:3;touch-action:pan-y;
+    -webkit-appearance:none;appearance:none;background:transparent;
+  }
+  .visual input::-webkit-slider-runnable-track{background:transparent;height:100%}
+  .visual input::-webkit-slider-thumb{-webkit-appearance:none;width:0;height:100%}
+  .visual input::-moz-range-track{background:transparent;height:100%}
+  .visual input::-moz-range-thumb{width:0;height:100%;border:0;background:transparent}
+  .seam{
+    position:absolute;top:0;bottom:0;left:var(--seam);width:2px;transform:translateX(-1px);
+    background:var(--led);box-shadow:0 0 18px 2px rgba(255,91,46,.55);
+    pointer-events:none;z-index:2;
+  }
+  .handle{
+    position:absolute;top:50%;left:50%;width:46px;height:46px;transform:translate(-50%,-50%);
+    border-radius:50%;background:var(--steel-900);border:2px solid var(--led);
+    display:grid;place-items:center;
+  }
+  .visual input:focus-visible ~ .seam .handle{outline:3px solid var(--bone);outline-offset:3px}
+  .meter{
+    margin-top:.85rem;display:flex;justify-content:space-between;gap:1rem;
+    font-family:var(--mono);font-size:.8125rem;color:var(--steel-300);
+  }
+  .meter b{font-weight:400;color:var(--bone)}
+
+  /* ---------- Implants ---------- */
+  .implants{background:var(--steel-900);border-top:1px solid var(--steel-700)}
+  .implants__grid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:clamp(2rem,6vw,5rem);align-items:start}
+  .implants h2{font-size:clamp(2.4rem,4.6vw,3.9rem)}
+  .implants__intro p{margin-top:1.25rem;color:var(--steel-300);max-width:38ch}
+  .picker{margin-top:2.25rem;display:flex;flex-direction:column;gap:.25rem}
+  .tab{
+    text-align:left;background:none;border:0;border-left:4px solid transparent;
+    padding:.35rem 1rem;color:var(--steel-500);cursor:pointer;
+    font-family:var(--display);font-weight:800;font-size:2.6rem;line-height:1.05;
+    transition:color .15s;
+  }
+  .tab:hover{color:var(--steel-300)}
+  .tab[aria-selected="true"]{color:var(--bone);border-left-color:var(--led)}
+
+  .spec{background:var(--steel-800);border:1px solid var(--steel-700);border-radius:6px;padding:clamp(1.5rem,3.5vw,2.75rem)}
+  .spec h3{font-size:clamp(2.2rem,4vw,3.25rem)}
+  .spec__desc{margin-top:1rem;color:var(--steel-300);max-width:52ch}
+  .spec dl{margin:2rem 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem 2rem}
+  .spec dt{color:var(--steel-300);font-size:.9375rem}
+  .spec dd{margin:.1rem 0 0;font-family:var(--display);font-weight:800;font-size:2.75rem;line-height:1}
+  .spec__keeps{
+    margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--steel-700);
+    display:flex;gap:.75rem;align-items:baseline;
+  }
+  .spec__keeps span{color:var(--led);font-weight:500;white-space:nowrap}
+
+  /* ---------- Process (the human side: bone) ---------- */
+  .process{background:var(--bone);color:var(--ink)}
+  .process h2{font-size:clamp(2.4rem,4.6vw,3.9rem);max-width:16ch}
+  .process__lede{margin-top:1.25rem;color:var(--muted-on-bone);max-width:44ch}
+  .steps{
+    list-style:none;margin:3.5rem 0 0;padding:0;counter-reset:step;
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1.75rem;
+  }
+  .steps li{counter-increment:step;border-top:2px solid var(--ink);padding-top:1rem;position:relative}
+  .steps li::before{
+    content:"";position:absolute;top:-7px;left:0;width:12px;height:12px;border-radius:50%;background:var(--led-deep);
+  }
+  .steps h3{font-size:2rem;margin-top:.25rem}
+  .steps h3::before{
+    content:counter(step);display:block;margin-bottom:.35rem;
+    font-size:1.1rem;color:var(--led-deep);
+  }
+  .steps p{margin-top:.6rem;color:var(--muted-on-bone);font-size:.9875rem;line-height:1.5}
+
+  /* ---------- Quote ---------- */
+  .quote blockquote{margin:0;max-width:22em}
+  .quote p{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,5.6vw,4.6rem);line-height:1}
+  .quote cite{display:block;margin-top:1.75rem;font-style:normal;color:var(--steel-300)}
+
+  /* ---------- Booking ---------- */
+  .book{border-top:1px solid var(--steel-700)}
+  .book__grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(2rem,6vw,5rem);align-items:start}
+  .book h2{font-size:clamp(2.6rem,5vw,4.4rem)}
+  .book__copy p{margin-top:1.25rem;color:var(--steel-300);max-width:38ch}
+  form{display:grid;gap:1.15rem}
+  label{display:block;font-size:.9375rem;color:var(--steel-300);margin-bottom:.4rem}
+  input[type=text],input[type=email],select{
+    width:100%;padding:.9rem 1rem;border-radius:4px;border:1px solid var(--steel-700);
+    background:var(--steel-800);color:var(--bone);font:inherit;
+  }
+  input::placeholder{color:var(--steel-500)}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--steel-300) 50%),linear-gradient(135deg,var(--steel-300) 50%,transparent 50%);background-position:calc(100% - 20px) 55%,calc(100% - 14px) 55%;background-size:6px 6px;background-repeat:no-repeat}
+  form .btn{justify-self:start;margin-top:.35rem}
+  .form-msg{min-height:1.6em;color:var(--bone)}
+  .form-msg.is-ok{border-left:4px solid var(--led);padding-left:.85rem}
+
+  /* ---------- Footer ---------- */
+  footer{border-top:1px solid var(--steel-700);padding-block:2rem;color:var(--steel-300);font-size:.9375rem}
+  footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:1000px){
+    .steps{grid-template-columns:1fr;gap:0;margin-top:2.5rem}
+    .steps li{border-top:0;border-left:2px solid var(--ink);padding:0 0 2rem 1.5rem}
+    .steps li::before{top:.35rem;left:-7px}
+  }
+  @media (max-width:900px){
+    .hero__grid,.implants__grid,.book__grid{grid-template-columns:1fr}
+    .nav a:not(.btn){display:none}
+    .tab{font-size:2.2rem}
+  }
+  @media (max-width:520px){
+    .spec dd{font-size:2.25rem}
+    .spec__keeps{flex-direction:column;gap:.25rem}
+    .btn{width:100%}
+    .hero__actions{gap:1rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .iris{transition:none}
+    .btn,.tab{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Seam home">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+        <path d="M14 2a12 12 0 0 0 0 24" fill="none" stroke="#EFE6DA" stroke-width="2.5"/>
+        <path d="M14 2a12 12 0 0 1 0 24Z" fill="#FF5B2E"/>
+      </svg>
+      SEAM
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#implants">Modules</a>
+      <a href="#process">Process</a>
+      <a href="#stories">Stories</a>
+      <a class="btn" href="#book">Book a consult</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div>
+        <h1>Keep the person. Upgrade the parts.</h1>
+        <p class="hero__lede">Seam builds replacement eyes, limbs and neural links that fit around who you already are. Drag the seam to compare.</p>
+        <div class="hero__actions">
+          <a class="btn btn--solid" href="#book">Book a consult</a>
+          <a class="link-quiet" href="#implants">See the modules</a>
+        </div>
+      </div>
+
+      <div class="visual-wrap">
+        <div class="visual" id="visual">
+
+          <!-- Human layer -->
+          <svg viewBox="0 0 600 400" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#E4B89C"/><stop offset="1" stop-color="#C68C6F"/>
+              </linearGradient>
+              <radialGradient id="irisH" cx=".5" cy=".5" r=".5">
+                <stop offset="0" stop-color="#3B2416"/><stop offset=".55" stop-color="#7C5334"/><stop offset="1" stop-color="#37241A"/>
+              </radialGradient>
+              <clipPath id="eyeH"><path d="M70 205Q300 70 530 205Q300 335 70 205Z"/></clipPath>
+            </defs>
+            <rect width="600" height="400" fill="url(#skin)"/>
+            <path d="M55 122Q300 18 552 110Q300 58 55 140Z" fill="#4A3020" opacity=".9"/>
+            <path d="M50 190Q300 28 550 190" fill="none" stroke="#A96F55" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+            <path d="M70 205Q300 70 530 205Q300 335 70 205Z" fill="#F4ECE4"/>
+            <g clip-path="url(#eyeH)">
+              <g class="iris">
+                <circle cx="300" cy="205" r="92" fill="url(#irisH)"/>
+                <circle cx="300" cy="205" r="36" fill="#120C09"/>
+                <circle cx="272" cy="176" r="12" fill="#fff" opacity=".85"/>
+              </g>
+              <path d="M70 205Q300 70 530 205L530 40L70 40Z" fill="#000" opacity=".13"/>
+            </g>
+            <path d="M70 205Q300 70 530 205Q300 335 70 205Z" fill="none" stroke="#5A3A2A" stroke-width="4"/>
+            <g stroke="#3A2618" stroke-width="5" stroke-linecap="round">
+              <path d="M139 171L124 150"/><path d="M208 148L198 123"/><path d="M300 138L300 111"/>
+              <path d="M392 148L402 123"/><path d="M461 171L476 150"/>
+            </g>
+          </svg>
+
+          <!-- Machine layer, revealed to the right of the seam -->
+          <div class="machine">
+            <svg viewBox="0 0 600 400" aria-hidden="true" focusable="false">
+              <defs>
+                <clipPath id="eyeM"><path d="M70 205Q300 70 530 205Q300 335 70 205Z"/></clipPath>
+                <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#2F3B49"/><stop offset="1" stop-color="#1B2430"/>
+                </linearGradient>
+              </defs>
+              <rect width="600" height="400" fill="#1B2430"/>
+              <g fill="none" stroke="#2A3542" stroke-width="2">
+                <path d="M0 60H180L210 30H600"/>
+                <path d="M0 340H120L150 372H600"/>
+                <path d="M570 60V150"/><path d="M30 250V340"/>
+              </g>
+              <g fill="#2A3542" stroke="#3A4756" stroke-width="1.5">
+                <circle cx="30" cy="30" r="5"/><circle cx="570" cy="30" r="5"/>
+                <circle cx="30" cy="370" r="5"/><circle cx="570" cy="370" r="5"/>
+              </g>
+              <path d="M55 122Q300 18 552 110L552 132Q300 46 55 142Z" fill="url(#plate)" stroke="#3A4756" stroke-width="2"/>
+              <path d="M70 205Q300 70 530 205Q300 335 70 205Z" fill="#0A0F14" stroke="#6B7B8C" stroke-width="4"/>
+              <g clip-path="url(#eyeM)">
+                <path d="M70 205H530M300 90V320" stroke="#FF5B2E" stroke-width="1" opacity=".35" stroke-dasharray="4 6"/>
+                <g class="iris">
+                  <circle cx="300" cy="205" r="92" fill="#121A24" stroke="#FF5B2E" stroke-width="3"/>
+                  <circle cx="300" cy="205" r="76" fill="none" stroke="#6B7B8C" stroke-width="2" stroke-dasharray="6 8"/>
+                  <g stroke="#6B7B8C" stroke-width="3" stroke-linecap="round">
+                    <line x1="300" y1="205" x2="300" y2="150"/>
+                    <line x1="300" y1="205" x2="300" y2="150" transform="rotate(60 300 205)"/>
+                    <line x1="300" y1="205" x2="300" y2="150" transform="rotate(120 300 205)"/>
+                    <line x1="300" y1="205" x2="300" y2="150" transform="rotate(180 300 205)"/>
+                    <line x1="300" y1="205" x2="300" y2="150" transform="rotate(240 300 205)"/>
+                    <line x1="300" y1="205" x2="300" y2="150" transform="rotate(300 300 205)"/>
+                  </g>
+                  <circle cx="300" cy="205" r="30" fill="#05080B" stroke="#FF5B2E" stroke-width="2"/>
+                  <circle cx="300" cy="205" r="7" fill="#FF5B2E"/>
+                  <circle cx="284" cy="189" r="5" fill="#fff" opacity=".6"/>
+                </g>
+              </g>
+              <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#A7B4C2" text-anchor="end">
+                <text x="540" y="345">zoom 12x</text>
+                <text x="540" y="362">latency 0.4 ms</text>
+              </g>
+            </svg>
+          </div>
+
+          <input id="seamRange" type="range" min="0" max="100" step="0.5" value="100"
+                 aria-label="Seam position. Move to compare original and augmented.">
+          <div class="seam" aria-hidden="true">
+            <div class="handle">
+              <svg width="22" height="14" viewBox="0 0 22 14" fill="none" stroke="#EFE6DA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L2 7l4 5"/><path d="M16 2l4 5-4 5"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="meter" aria-live="off">
+          <span>Original <b id="pctOrig">0%</b></span>
+          <span>Augmented <b id="pctAug">100%</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODULES -->
+  <section class="section implants" id="implants">
+    <div class="wrap implants__grid">
+      <div class="implants__intro">
+        <h2>Three modules. Each replaces one part and leaves the rest alone.</h2>
+        <p>Pick one, or combine them. Every module is fitted to your scan, not to an average body.</p>
+        <div class="picker" role="tablist" aria-label="Modules">
+          <button class="tab" role="tab" id="tab-optic" data-id="optic" aria-selected="true" aria-controls="spec">Optic</button>
+          <button class="tab" role="tab" id="tab-grip" data-id="grip" aria-selected="false" aria-controls="spec" tabindex="-1">Grip</button>
+          <button class="tab" role="tab" id="tab-link" data-id="link" aria-selected="false" aria-controls="spec" tabindex="-1">Link</button>
+        </div>
+      </div>
+
+      <div class="spec" id="spec" role="tabpanel" aria-labelledby="tab-optic" aria-live="polite">
+        <h3 id="specName">Seam Optic</h3>
+        <p class="spec__desc" id="specDesc"></p>
+        <dl>
+          <div><dt>Weight</dt><dd id="sWeight"></dd></div>
+          <div><dt>Battery life</dt><dd id="sBattery"></dd></div>
+          <div><dt>Recovery</dt><dd id="sRecovery"></dd></div>
+          <div><dt>Warranty</dt><dd id="sWarranty"></dd></div>
+        </dl>
+        <p class="spec__keeps"><span>Stays yours</span><em id="sKeeps" style="font-style:normal;color:var(--steel-300)"></em></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section class="section process" id="process">
+    <div class="wrap">
+      <h2>Five visits from first call to first day.</h2>
+      <p class="process__lede">You decide the pace. You can stop after any visit and keep everything we have done so far.</p>
+      <ol class="steps">
+        <li><h3>Consult</h3><p>Thirty minutes, no commitment. We listen first and talk hardware second.</p></li>
+        <li><h3>Scan</h3><p>Full mapping of the area, so the module is built around your body.</p></li>
+        <li><h3>Fit</h3><p>Surgery day. Most people go home within 48 hours.</p></li>
+        <li><h3>Calibrate</h3><p>Two weeks of tuning, in person or remote, until it feels like nothing.</p></li>
+        <li><h3>Follow up</h3><p>Check-ins at 1, 6 and 12 months, and service for as long as you wear it.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- QUOTE -->
+  <section class="section quote" id="stories">
+    <div class="wrap">
+      <blockquote>
+        <p>I asked them to keep my handwriting. They kept my handwriting.</p>
+        <cite>Marta Okonkwo, violin maker, Seam Grip, left hand</cite>
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- BOOKING -->
+  <section class="section book" id="book">
+    <div class="wrap book__grid">
+      <div class="book__copy">
+        <h2>Book a 30-minute consult.</h2>
+        <p>Tell us which part you are thinking about. A clinician, not a salesperson, will reply within two working days.</p>
+      </div>
+      <form id="bookForm" novalidate>
+        <div>
+          <label for="name">Your name</label>
+          <input type="text" id="name" name="name" autocomplete="name" placeholder="Ada Lovelace" required>
+        </div>
+        <div>
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email" placeholder="ada@example.com" required>
+        </div>
+        <div>
+          <label for="module">Module you are curious about</label>
+          <select id="module" name="module">
+            <option>Seam Optic</option>
+            <option>Seam Grip</option>
+            <option>Seam Link</option>
+            <option>Not sure yet</option>
+          </select>
+        </div>
+        <button class="btn btn--solid" type="submit">Book a consult</button>
+        <p class="form-msg" id="formMsg" role="status"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Seam is a fictional company, made for a Techfest web design task.</span>
+    <span>&copy; 2026 Seam</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Seam slider ---------- */
+  var visual = document.getElementById('visual');
+  var range  = document.getElementById('seamRange');
+  var pOrig  = document.getElementById('pctOrig');
+  var pAug   = document.getElementById('pctAug');
+
+  function setSeam(v){
+    v = Math.max(0, Math.min(100, v));
+    visual.style.setProperty('--seam', v + '%');
+    range.value = v;
+    var o = Math.round(v), a = 100 - o;
+    pOrig.textContent = o + '%';
+    pAug.textContent  = a + '%';
+    range.setAttribute('aria-valuetext', o + '% original, ' + a + '% augmented');
+  }
+  range.addEventListener('input', function(){ cancelIntro(); setSeam(parseFloat(range.value)); });
+
+  /* One-time intro: the seam sweeps in from the right and settles at the middle */
+  var raf = null, cancelled = false;
+  function cancelIntro(){ cancelled = true; if (raf) cancelAnimationFrame(raf); }
+  if (reduce){
+    setSeam(50);
+  } else {
+    setSeam(100);
+    var start = null, from = 100, to = 50, dur = 1600;
+    var ease = function(t){ return 1 - Math.pow(1 - t, 3); };
+    setTimeout(function(){
+      if (cancelled) return;
+      raf = requestAnimationFrame(function step(ts){
+        if (cancelled) return;
+        if (start === null) start = ts;
+        var t = Math.min(1, (ts - start) / dur);
+        setSeam(from + (to - from) * ease(t));
+        if (t < 1) raf = requestAnimationFrame(step);
+      });
+    }, 500);
+  }
+
+  /* ---------- Eyes follow the pointer ---------- */
+  window.addEventListener('pointermove', function(e){
+    var r = visual.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var dx = e.clientX - cx, dy = e.clientY - cy;
+    var dist = Math.hypot(dx, dy) || 1;
+    var k = Math.min(1, dist / 350);
+    visual.style.setProperty('--ix', (dx / dist * 26 * k).toFixed(1));
+    visual.style.setProperty('--iy', (dy / dist * 13 * k).toFixed(1));
+  });
+
+  /* ---------- Module picker ---------- */
+  var modules = {
+    optic:{
+      name:'Seam Optic',
+      desc:'Replaces the lens and retina of one eye. Sees in near-dark, zooms up to 12x, and still blinks when something comes at your face.',
+      weight:'9 g', battery:'3 days', recovery:'10 days', warranty:'10 years',
+      keeps:'Your eye color, tear ducts and blink reflex.'
+    },
+    grip:{
+      name:'Seam Grip',
+      desc:'Replaces the forearm and hand, with pressure and temperature feedback. Holds 90 kg, or holds an egg without you thinking about it.',
+      weight:'1.1 kg', battery:'5 days', recovery:'6 weeks', warranty:'10 years',
+      keeps:'Your handwriting and the way you wave hello.'
+    },
+    link:{
+      name:'Seam Link',
+      desc:'A thin neural interface behind the ear that ties the other modules together and reads intent, so a reach stays a reach.',
+      weight:'4 g', battery:'12 days', recovery:'3 weeks', warranty:'15 years',
+      keeps:'Your thoughts. Nothing leaves the device unless you send it.'
+    }
+  };
+  var tabs  = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var panel = document.getElementById('spec');
+  var el = {
+    name:document.getElementById('specName'), desc:document.getElementById('specDesc'),
+    w:document.getElementById('sWeight'), b:document.getElementById('sBattery'),
+    r:document.getElementById('sRecovery'), y:document.getElementById('sWarranty'),
+    k:document.getElementById('sKeeps')
+  };
+  function selectModule(id){
+    tabs.forEach(function(t){
+      var on = t.dataset.id === id;
+      t.setAttribute('aria-selected', on);
+      t.tabIndex = on ? 0 : -1;
+    });
+    var m = modules[id];
+    el.name.textContent = m.name; el.desc.textContent = m.desc;
+    el.w.textContent = m.weight; el.b.textContent = m.battery;
+    el.r.textContent = m.recovery; el.y.textContent = m.warranty;
+    el.k.textContent = m.keeps;
+    panel.setAttribute('aria-labelledby', 'tab-' + id);
+  }
+  tabs.forEach(function(t, i){
+    t.addEventListener('click', function(){ selectModule(t.dataset.id); });
+    t.addEventListener('keydown', function(e){
+      var dir = 0;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') dir = 1;
+      if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  dir = -1;
+      if (!dir) return;
+      e.preventDefault();
+      var n = tabs[(i + dir + tabs.length) % tabs.length];
+      n.focus(); selectModule(n.dataset.id);
+    });
+  });
+  selectModule('optic');
+
+  /* ---------- Booking form (no network, confirms on the page) ---------- */
+  var form = document.getElementById('bookForm');
+  var msg  = document.getElementById('formMsg');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name  = form.name.value.trim();
+    var email = form.email.value.trim();
+    var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    msg.classList.remove('is-ok');
+    if (!name){ msg.textContent = 'Enter your name so we know who to reply to.'; form.name.focus(); return; }
+    if (!ok){   msg.textContent = 'Enter a valid email address, like ada@example.com.'; form.email.focus(); return; }
+    msg.classList.add('is-ok');
+    msg.textContent = 'Consult booked for ' + name + '. We will email ' + email + ' about ' + form.module.value + ' within two working days.';
+    form.reset();
+  });
+})();
+</script>
+</body>
+</html>
